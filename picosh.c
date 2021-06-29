@@ -127,7 +127,7 @@ int main()
         char *c = buf;
         if (!fgets(c + 1, sizeof(buf) - 1, stdin))
             exit(0);
-        int lwBound=1 , upBound = 511,p;
+        int lwBound = 1 , upBound = 511 , p;
         while(lwBound < upBound){ /* if lwBound >= upBound then break */
             p = (lwBound + upBound)/2;
             if (!*(c+p)) /* if pivot value == NULL */
