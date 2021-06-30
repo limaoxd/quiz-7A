@@ -12,10 +12,10 @@ static void prompt()
 }
 
 /* Display error message, optionally - exit */
-static void fatal(int retval, int leave)
+static int fatal(int retval, int leave)
 {
     if (retval >= 0)
-        return;
+        return retval;
     write(2, "?\n", 2);
     if (leave)
         exit(1);
@@ -47,6 +47,7 @@ static int is_special(int c)
  */
 static void run(char *c, int t)
 {
+    int redir_stderr = 0;
     char *redir_stdin = NULL, *redir_stdout = NULL;
     int pipefds[2] = {0, 0}, outfd = 0;
     char *v[99] = {0};
@@ -65,8 +66,13 @@ static void run(char *c, int t)
         if (is_redir(*c)) { /* If < or > */
             if (*c == '<')
                 redir_stdin = *u;
-            else
+            else{
                 redir_stdout = *u;
+                if (c[-1] == '2') {
+                    redir_stderr = 2;
+                    c--; 
+                }
+            }
             if ((u - v) != 98)
                 u++;
         }
@@ -111,10 +117,16 @@ static void run(char *c, int t)
         dup2(t, 1); /* replace stdout with t */
         close(t);
     }
-
+    
     if (redir_stdout) {
-        close(1);
-        fatal(creat(redir_stdout, 438), 1); /* replace stdout with redir */
+        if(redir_stderr){
+            outfd = fatal(open(redir_stdout ,O_RDWR | O_CREAT),1);
+            dup2(outfd, 2);
+            close(outfd);
+        }else{
+            close(1);
+            fatal(creat(redir_stdout, 438), 1); /* replace stdout with redir */
+        }
     }
     fatal(execvp(*u, u), 1);
 }
