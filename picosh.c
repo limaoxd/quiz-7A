@@ -119,13 +119,11 @@ static void run(char *c, int t)
     }
     
     if (redir_stdout) {
+        close(1);
+        outfd = fatal(creat(redir_stdout, 438),1); /* replace stdout with redir */
         if(redir_stderr){
-            outfd = fatal(open(redir_stdout ,O_RDWR | O_CREAT),1);
-            dup2(outfd, 2);
+            dup2(outfd, redir_stderr);
             close(outfd);
-        }else{
-            close(1);
-            fatal(creat(redir_stdout, 438), 1); /* replace stdout with redir */
         }
     }
     fatal(execvp(*u, u), 1);
